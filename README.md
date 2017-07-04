@@ -19,8 +19,11 @@ smeago -p 3000 -o "public/" -loc "http://example.com"
 
 ```
 -h the host name to crawl
+   default: http://localhost
 -p the host port to crawl
+   default: 8080
 -loc the host to be prefixed with the paths in the sitemap
+   default: http://localhost
    example: -loc http://example.com
    <url>
     <loc>
@@ -28,4 +31,5 @@ smeago -p 3000 -o "public/" -loc "http://example.com"
     </loc>
    </url>
 -o the relative output directory for the sitemap.xml file
+   default: <current directory>
 ```
