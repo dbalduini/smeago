@@ -1,6 +1,7 @@
 package smeago
 
 import (
+	"bytes"
 	"reflect"
 	"testing"
 )
@@ -30,5 +31,14 @@ func TestGetLinks(t *testing.T) {
 
 	if !reflect.DeepEqual(links, expected) {
 		t.Error("unexpected links:", links)
+	}
+}
+
+func BenchmarkReadString(b *testing.B) {
+	bs := []byte("Hello, World")
+	n := len(bs)
+	rd := bytes.NewReader(bs)
+	for i := 0; i < b.N; i++ {
+		ReadString(rd, n)
 	}
 }

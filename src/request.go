@@ -3,7 +3,6 @@ package smeago
 import (
 	"html"
 	"io"
-	"io/ioutil"
 	"regexp"
 )
 
@@ -15,15 +14,16 @@ type Result struct {
 	Links []string
 }
 
-func ParseRequestBody(rd io.Reader) (*Result, error) {
+func ReadString(rd io.Reader, n int) (*Result, error) {
 	r := &Result{}
+	bs := make([]byte, n, n)
 
-	b, err := ioutil.ReadAll(rd)
+	_, err := io.ReadAtLeast(rd, bs, n)
 	if err != nil {
 		return r, err
 	}
 
-	s := string(b)
+	s := string(bs)
 	links := getLinks(s)
 	lc := links[:0]
 	// Only internal links

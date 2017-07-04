@@ -54,7 +54,7 @@ func (c *Crawler) Crawl(j Job) {
 	}
 	defer resp.Body.Close()
 
-	r, _ := ParseRequestBody(resp.Body)
+	r, _ := ReadString(resp.Body, int(resp.ContentLength))
 	j.Links = r.Links
 	j.Completed = true
 	c.Results <- j
