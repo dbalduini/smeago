@@ -14,7 +14,7 @@ type Result struct {
 	Links []string
 }
 
-func ReadString(rd io.Reader, n int) (*Result, error) {
+func ReadStringSize(rd io.Reader, n int) (*Result, error) {
 	r := &Result{}
 	bs := make([]byte, n, n)
 

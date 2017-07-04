@@ -5,20 +5,23 @@ import (
 	"testing"
 )
 
-func TestWriteSitemap(t *testing.T) {
+func TestWrite(t *testing.T) {
 	expected := `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	<url>
-		<loc>foo</loc>
+		<loc>http://example.com/foo</loc>
 	</url>
 	<url>
-		<loc>bar</loc>
+		<loc>http://example.com/bar</loc>
 	</url>
 </urlset>`
 
-	links := []string{"foo", "bar"}
+	s := &Sitemap{
+		Path:  "http://example.com",
+		Links: []string{"/foo", "/bar"},
+	}
 	buff := new(bytes.Buffer)
-	err := WriteSitemap(buff, links)
+	err := s.Write(buff)
 
 	if err != nil {
 		t.Error(err.Error())
@@ -30,10 +33,13 @@ func TestWriteSitemap(t *testing.T) {
 }
 
 func BenchmarkWriteSitemap(b *testing.B) {
-	links := []string{"foo", "bar"}
+	s := &Sitemap{
+		Path:  "http://example.com",
+		Links: []string{"/foo", "/bar"},
+	}
 	buff := new(bytes.Buffer)
 	for i := 0; i < b.N; i++ {
-		WriteSitemap(buff, links)
+		s.Write(buff)
 		buff.Reset()
 	}
 }

@@ -6,17 +6,11 @@ import (
 )
 
 type Job struct {
-	ID        int
-	Path      string
-	Links     []string
-	Completed bool
-	IsRetry   bool
-}
-
-type Crawler struct {
-	Domain  string
-	Results chan Job
-	Retries chan Job
+	ID         int
+	Path       string
+	Links      []string
+	Completed  bool
+	RetryCount int
 }
 
 // NewJob creates a new Job
@@ -25,6 +19,12 @@ func NewJob(id int, path string) *Job {
 		ID:   id,
 		Path: path,
 	}
+}
+
+type Crawler struct {
+	Domain  string
+	Results chan Job
+	Retries chan Job
 }
 
 // NewCrawler creates a crawler for the given domain
@@ -36,12 +36,12 @@ func NewCrawler(d string) *Crawler {
 	return c
 }
 
-// Crawl the job path and retryies in case of failures
+// Crawl the job path and retries in case of failures
 func (c *Crawler) Crawl(j Job) {
 	link := c.Domain + j.Path
 
-	if j.IsRetry {
-		log.Println("Retrying:", link)
+	if j.RetryCount > 0 {
+		log.Printf("Retrying (%d): %s\n", j.RetryCount, link)
 	} else {
 		log.Println("Visiting:", link)
 	}
@@ -54,7 +54,7 @@ func (c *Crawler) Crawl(j Job) {
 	}
 	defer resp.Body.Close()
 
-	r, _ := ReadString(resp.Body, int(resp.ContentLength))
+	r, _ := ReadStringSize(resp.Body, int(resp.ContentLength))
 	j.Links = r.Links
 	j.Completed = true
 	c.Results <- j

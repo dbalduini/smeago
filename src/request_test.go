@@ -34,11 +34,11 @@ func TestGetLinks(t *testing.T) {
 	}
 }
 
-func BenchmarkReadString(b *testing.B) {
+func BenchmarkReadStringSize(b *testing.B) {
 	bs := []byte("Hello, World")
 	n := len(bs)
 	rd := bytes.NewReader(bs)
 	for i := 0; i < b.N; i++ {
-		ReadString(rd, n)
+		ReadStringSize(rd, n)
 	}
 }

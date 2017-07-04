@@ -1,115 +1,51 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"github.com/dbalduini/smeago/src"
 	"log"
 	"os"
 	"path"
-	"sort"
 	"time"
 )
 
 var (
-	host        string
-	port        string
-	urlLoc      string
-	outputDir   string
-	sitemapFile string
+	host      string
+	port      string
+	urlLoc    string
+	outputDir string
 )
 
 func main() {
 	flag.Parse()
 
+	start := time.Now()
 	origin := host + ":" + port
-	sitemapFile = path.Join(outputDir, "sitemap.xml")
+
+	s := &smeago.Sitemap{}
+	s.Filename = path.Join(outputDir, "sitemap.xml")
+	s.Path = urlLoc
 
 	log.Println("Crawling Host:", origin)
-	log.Println("Urlset Loc:", urlLoc)
-	log.Println("Sitemap File:", sitemapFile)
-
-	// Control Variables
-	start := time.Now()
-	done := make(chan bool, 1)
-	pending := make(map[int]int)
-	visited := make(map[string]int)
-	stop := false
+	log.Println("Urlset Loc:", s.Path)
+	log.Println("Sitemap File:", s.Filename)
 
 	// Start crawling on the home page
-	crawler := smeago.NewCrawler(origin)
-	jobID := 1
-	pending[jobID] = 1
-	visited["/"] = 1
-	j := *smeago.NewJob(jobID, "/")
-	go crawler.Crawl(j)
+	c := smeago.NewCrawler(origin)
+	cs := smeago.NewCrawlerSupervisor(c)
+	cs.AddJobToBuffer("/")
 
-	for !stop {
-		select {
-		case j := <-crawler.Results:
-			delete(pending, j.ID)
+	// Block main until the crawler is done
+	done := make(chan bool, 1)
+	cs.Start(done)
+	<-done
+	close(done)
 
-			for _, l := range j.Links {
-				_, ok := visited[l]
-				if !ok {
-					// new link
-					jobID++
-					pending[jobID] = 1
-					visited[l] = 1
-					job := *smeago.NewJob(jobID, l)
-					go crawler.Crawl(job)
-				} else {
-					// already visited
-					visited[l]++
-				}
-			}
-
-			if len(pending) == 0 {
-				done <- true
-			}
-		case j := <-crawler.Retries:
-			go func() {
-				time.Sleep(time.Second * 3)
-				j.IsRetry = true
-				crawler.Crawl(j)
-			}()
-		case stop = <-done:
-		}
-	}
-
-	err := writeSitemap(visited, true)
-	if err != nil {
+	s.Links = cs.GetVisitedLinks()
+	if err := s.WriteToFile(true); err != nil {
 		log.Println(err)
 	}
 	log.Println("Finished in", time.Since(start))
-}
-
-func writeSitemap(visited map[string]int, sortLinks bool) error {
-	links := make([]string, 0)
-	for k := range visited {
-		links = append(links, urlLoc+k)
-	}
-
-	if sortLinks {
-		sort.Strings(links)
-	}
-
-	log.Println("Writing Sitemap:", len(links))
-	f, err := os.Create(sitemapFile)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	wd := bufio.NewWriter(f)
-
-	err = smeago.WriteSitemap(wd, links)
-	if err != nil {
-		return err
-	}
-
-	wd.Flush()
-	return nil
 }
 
 func init() {

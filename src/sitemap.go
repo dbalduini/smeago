@@ -1,8 +1,11 @@
 package smeago
 
 import (
+	"bufio"
 	"bytes"
 	"io"
+	"os"
+	"sort"
 )
 
 // Common used bytes
@@ -13,13 +16,40 @@ var (
 	pos    = []byte("</loc>\n\t</url>")
 )
 
-// WriteSitemap writes links into writer with tab indentation
-func WriteSitemap(w io.Writer, links []string) error {
+type Sitemap struct {
+	Filename string
+	Links    []string
+	Path     string
+}
+
+// WriteToFile writes the sitemap into a file
+func (s *Sitemap) WriteToFile(sortLinks bool) error {
+	if sortLinks {
+		sort.Strings(s.Links)
+	}
+
+	f, err := os.Create(s.Filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	wd := bufio.NewWriter(f)
+	err = s.Write(wd)
+	if err != nil {
+		return err
+	}
+	wd.Flush()
+	return nil
+}
+
+func (s *Sitemap) Write(w io.Writer) error {
 	buff := new(bytes.Buffer)
 	buff.Write(header)
 	buff.Write(root)
-	for _, loc := range links {
+	for _, loc := range s.Links {
 		buff.Write(pre)
+		buff.WriteString(s.Path)
 		buff.WriteString(loc)
 		buff.Write(pos)
 	}
