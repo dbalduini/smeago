@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"io"
 	"os"
-	"sort"
 )
 
 // Common used bytes
@@ -23,11 +22,7 @@ type Sitemap struct {
 }
 
 // WriteToFile writes the sitemap into a file
-func (s *Sitemap) WriteToFile(sortLinks bool) error {
-	if sortLinks {
-		sort.Strings(s.Links)
-	}
-
+func (s *Sitemap) WriteToFile() error {
 	f, err := os.Create(s.Filename)
 	if err != nil {
 		return err

@@ -38,6 +38,10 @@ func NewCrawler(d string) *Crawler {
 
 // Crawl the job path and retries in case of failures
 func (c *Crawler) Crawl(j Job) {
+	var (
+		err error
+		r   *Result
+	)
 	link := c.Domain + j.Path
 
 	if j.RetryCount > 0 {
@@ -54,7 +58,19 @@ func (c *Crawler) Crawl(j Job) {
 	}
 	defer resp.Body.Close()
 
-	r, _ := ReadStringSize(resp.Body, int(resp.ContentLength))
+	n := int(resp.ContentLength)
+	if n > 0 {
+		r, err = ReadStringSize(resp.Body, n)
+	} else {
+		r, err = ReadString(resp.Body)
+	}
+
+	if err != nil {
+		log.Println(err)
+		c.Results <- j
+		return
+	}
+
 	j.Links = r.Links
 	j.Completed = true
 	c.Results <- j

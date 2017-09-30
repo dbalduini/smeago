@@ -3,6 +3,7 @@ package smeago
 import (
 	"html"
 	"io"
+	"io/ioutil"
 	"regexp"
 )
 
@@ -19,6 +20,27 @@ func ReadStringSize(rd io.Reader, n int) (*Result, error) {
 	bs := make([]byte, n, n)
 
 	_, err := io.ReadAtLeast(rd, bs, n)
+	if err != nil {
+		return r, err
+	}
+
+	s := string(bs)
+	links := getLinks(s)
+	lc := links[:0]
+	// Only internal links
+	for _, l := range links {
+		if l[0] == '/' {
+			lc = append(lc, decodeURL(l))
+		}
+	}
+	r.Links = lc
+	return r, nil
+}
+
+func ReadString(rd io.Reader) (*Result, error) {
+	r := &Result{}
+
+	bs, err := ioutil.ReadAll(rd)
 	if err != nil {
 		return r, err
 	}

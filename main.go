@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"sort"
 	"time"
 )
 
@@ -20,7 +21,14 @@ func main() {
 	flag.Parse()
 
 	start := time.Now()
-	origin := host + ":" + port
+
+	origin := host
+	if port != "80" {
+		origin += ":" + port
+	}
+	if urlLoc == "" {
+		urlLoc = origin
+	}
 
 	s := &smeago.Sitemap{}
 	s.Filename = path.Join(outputDir, "sitemap.xml")
@@ -42,26 +50,22 @@ func main() {
 	close(done)
 
 	s.Links = cs.GetVisitedLinks()
-	if err := s.WriteToFile(true); err != nil {
+	sort.Strings(s.Links)
+	if err := s.WriteToFile(); err != nil {
 		log.Println(err)
 	}
 	log.Println("Finished in", time.Since(start))
 }
 
 func init() {
-	const (
-		defaultHost = "http://localhost"
-		defaultPort = "8080"
-	)
-
 	wordDir, err := os.Getwd()
 	if err != nil {
 		log.Println(err)
 		wordDir = ""
 	}
 
-	flag.StringVar(&host, "h", defaultHost, "the host name")
-	flag.StringVar(&port, "p", defaultPort, "the host port")
-	flag.StringVar(&urlLoc, "loc", defaultHost, "the prefix of sitemap loc tags")
+	flag.StringVar(&host, "h", "http://localhost", "the host name")
+	flag.StringVar(&port, "p", "80", "the host port")
+	flag.StringVar(&urlLoc, "loc", "", "the prefix of sitemap loc tags")
 	flag.StringVar(&outputDir, "o", wordDir, "the sitemap output dir")
 }
